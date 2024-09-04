@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Check if on the correct branch
+current_branch=$(git branch --show-current)
+default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p')
+
+echo "Default: $default_branch"
+echo "Current: $current_branch"
+
+if [ "$current_branch" == "$default_branch" ]; then
+  echo "You're already on the $default_branch branch. No need to sync."
+  exit 1
+fi
+
+# Fetch the latest changes from the remote
+git fetch origin
+
+# Switch to the master branch
+git checkout $default_branch
+
+# Pull the latest changes from the master branch
+git pull origin $default_branch
+
+# Switch back to your original branch
+git checkout "$current_branch"
+
+# Rebase your branch with master
+git rebase $default_branch
+
+# Check for conflicts
+if [ $? -ne 0 ]; then
+  echo "Rebase conflict detected. Resolve the conflicts and run 'git rebase --continue'."
+  exit 1
+else
+  echo "Successfully synced your branch with the default branch $default_branch."
+fi
